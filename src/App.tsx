@@ -32,6 +32,7 @@ export function App() {
     })
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<Status | 'All'>('All')
+    const [assigneeFilter, setAssigneeFilter] = useState<string>('')
     const [sorting, setSorting] = useState<SortingState>([{ id: 'updatedAt', desc: true }])
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [showForm, setShowForm] = useState(false)
@@ -43,6 +44,7 @@ export function App() {
     })
 
     const issues = issuesQuery.data ?? []
+    const assignees = [...new Set(issues.map((issue) => issue.owner))].sort()
     const selected = issues.find((issue) => issue.id === selectedId)
     const counts = {
         total: issues.length,
@@ -93,7 +95,13 @@ export function App() {
         getFilteredRowModel: getFilteredRowModel(),
         getSortedRowModel: getSortedRowModel(),
     })
-    const visibleRows = table.getRowModel().rows.filter((row) => statusFilter === 'All' || row.original.status === statusFilter)
+    const visibleRows = table
+        .getRowModel()
+        .rows.filter(
+            (row) =>
+                (statusFilter === 'All' || row.original.status === statusFilter) &&
+                (assigneeFilter === '' || row.original.owner === assigneeFilter),
+        )
 
     async function submitIssue(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
@@ -168,7 +176,7 @@ export function App() {
                         <div className="panel-heading">
                             <div>
                                 <h2>All issues</h2>
-                                <p>Explore your team’s work and update its status.</p>
+                                <p>Explore your team's work and update its status.</p>
                             </div>
                             <span className="result-count">{visibleRows.length} results</span>
                         </div>
@@ -194,6 +202,17 @@ export function App() {
                                     <option>All</option>
                                     {statuses.map((status) => (
                                         <option key={status}>{status}</option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="filter">
+                                Assignee{' '}
+                                <select value={assigneeFilter} onChange={(event) => setAssigneeFilter(event.target.value)}>
+                                    <option value="">All owners</option>
+                                    {assignees.map((assignee) => (
+                                        <option key={assignee} value={assignee}>
+                                            {assignee}
+                                        </option>
                                     ))}
                                 </select>
                             </label>
